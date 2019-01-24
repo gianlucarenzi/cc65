@@ -1,0 +1,76 @@
+                                       Fields
+                          A Dialog-like Processor for cc65
+
+				 by Joseph Rose,
+				aka. Harry Potter
+
+
+[Overview]
+
+	Fields is a simple window-like TUI for Commodore and Apple 2
+computers.  8-bit systems don't really have much of an UI, so I designed
+this library to allow a user to enter data into a 6502-based computer the
+way one would enter data into a Windows dialog box.  I don't remember exactly
+why I developed this library, but I enjoyed creating it and think it was a
+good experience.
+
+[Thanks]
+
+	I would like to thank Greg King for his interest in Fields and his
+help in optimizing it.
+
+[Declaring the Dialog Interface]
+
+	A screen is declared using the "fldenv" typedef as explained in 
+"include\dialog.h" in the distribution.  This library currently returns data
+to locations pointed to by the screen data.  Before you begin, you need to
+define a struct to hold the desired information.  Use char arrays to hold
+text and unsigned ints to hold the other types.  When done, proceed to the
+next step.
+
+When ready to declare the screen, follow the following steps:
+
+*	Declare each field in the field type, as explained in dialog.h.  You
+	need to fill the flddata union structure in your code.  A naming conv-
+	ention I use is fName.
+*	Declare an array of pointers to "field" to each field in the dialog.
+*	Declare the dialog as a fldenv type.  First, if your computer is not
+	a color computer, ignore the colors.  Otherwise, declare the colors.
+*	Declare the title and globalhelp strings.
+*	Declare the numfields to the number of fields in the dialog.
+*	Declare the fldenv structure's field pointer to pointer as the field
+	pointer array.
+*	Write the code for the dialog as follows:
+	*	Start the function with a list of declarations to each field's
+		data union as described in dialog.h and diatest.h.  Each data
+		field contains a pointer to its input buffer.  This is to allow
+		the program to store all user input in a single struct.
+	*	Set screen colors if applicable.
+	*	Call routine dialog() with a pointer to the dialog data, type
+		fldenv.
+	*	If dialog() returns 0, process the returned data and continue.
+		If 1, cancel request.  Note that, even though it clears the
+		screen before displaying the dialog, dialog() does not erase
+		the screen upon exit.
+
+
+[Declaring a menu]
+
+	Fields now has menu support.  In order to create a menu, declare every
+submenu as a struct menuitemops as static (or allocate it from memory, but
+static is more efficient) according to the instructions in menus.h, then define
+a struct mainmenuops variable as the same.  In struct menuitemsops, menuitems[]
+points to an array of submenu item names, and struct mainmenuops m[] points to
+a struct menuitemops array which contains pointers to each submenu.  Make sure
+all coordinate values are correct, because they define how the menus are
+displayed and Fields doesn't automatically detect menu size.  mainmenu()
+returns a word, where the LSB is the index of the main menu selected and the
+MSB is the index of the submenu selected.  If the user canceled the selection
+by pressing Escape or Stop, mainmenu() returns -1 (0xFFFF).  Also, this routine
+doesn't redraw the screen upon exit: that's your responsibility.
+
+[Contact]
+
+	If you like and use Fields, or have comments, I'd like to hear from you.
+My e-mail address is maspethrose7@aol.com.  Please start the subject with
+"To Joseph:" because I currently share an e-mail addreess.
