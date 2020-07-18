@@ -426,8 +426,10 @@ static CodeEntry* ParseInsn (CodeSeg* S, LineInfo* LI, const char* L)
         unsigned Hash = HashStr (Arg) % CS_LABEL_HASH_SIZE;
         Label = CS_FindLabel (S, Arg, Hash);
 
-        /* If we don't have the label, it's a forward ref - create it */
-        if (Label == 0) {
+        /* If we don't have the label, it's a forward ref - create it unless
+        ** it's an external function.
+        */
+        if (Label == 0 && (OPC->OPC != OP65_JMP || IsLocalLabelName (Arg)) ) {
             /* Generate a new label */
             Label = CS_NewCodeLabel (S, Arg, Hash);
         }
@@ -1351,7 +1353,7 @@ void CS_OutputEpilogue (const CodeSeg* S)
 */
 {
     if (S->Func) {
-        WriteOutput ("\n.endproc\n\n");
+        WriteOutput (".endproc\n\n");
     }
 }
 
@@ -1420,6 +1422,9 @@ void CS_Output (CodeSeg* S)
         /* Output the code */
         CE_Output (E);
     }
+
+    /* Prettyier formatting */
+    WriteOutput ("\n");
 
     /* If debug info is enabled, terminate the last line number information */
     if (DebugInfo) {
@@ -1555,9 +1560,9 @@ void CS_GenRegInfo (CodeSeg* S)
 
             /* If this insn is a branch on zero flag, we may have more info on
             ** register contents for one of both flow directions, but only if
-            ** there is a previous instruction.
+            ** we've gone through a previous instruction.
             */
-            if ((E->Info & OF_ZBRA) != 0 && (P = CS_GetPrevEntry (S, I)) != 0) {
+            if (LabelCount == 0 && (E->Info & OF_ZBRA) != 0 && (P = CS_GetPrevEntry (S, I)) != 0) {
 
                 /* Get the branch condition */
                 bc_t BC = GetBranchCond (E->OPC);

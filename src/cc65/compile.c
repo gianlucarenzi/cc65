@@ -38,6 +38,7 @@
 
 /* common */
 #include "debugflag.h"
+#include "segnames.h"
 #include "version.h"
 #include "xmalloc.h"
 #include "xsprintf.h"
@@ -170,8 +171,9 @@ static void Parse (void)
                 (CurTok.Tok != TOK_SEMI)) {
 
                 FuncDesc* D = GetFuncDesc (Decl.Type);
+
                 if (D->Flags & FD_EMPTY) {
-                    D->Flags = (D->Flags & ~(FD_EMPTY | FD_VARIADIC)) | FD_VOID_PARAM;
+                    D->Flags = (D->Flags & ~FD_EMPTY) | FD_VOID_PARAM;
                 }
             }
 
@@ -419,6 +421,11 @@ void FinishCompile (void)
 {
     SymEntry* Entry;
 
+    /* Reset the BSS segment name to its default; so that the below strcmp()
+    ** will work as expected, at the beginning of the list of variables
+    */
+    SetSegName (SEG_BSS, SEGNAME_BSS);
+
     /* Walk over all global symbols:
     ** - for functions, do clean-up and optimizations
     ** - generate code for uninitialized global variables
@@ -446,7 +453,7 @@ void FinishCompile (void)
     }
 
     /* Output the literal pool */
-    OutputLiteralPool ();
+    OutputGlobalLiteralPool ();
 
     /* Emit debug infos if enabled */
     EmitDebugInfo ();
