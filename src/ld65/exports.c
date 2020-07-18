@@ -481,10 +481,10 @@ void InsertExport (Export* E)
                         Imp->Exp = E;
                         Imp = Imp->Next;
                     }
-                } else {
-                    /* Duplicate entry, ignore it */
-                    Warning ("Duplicate external identifier: '%s'",
-                             GetString (L->Name));
+                } else if (AllowMultDef == 0) {
+                    /* Duplicate entry, this is fatal unless allowed by the user */
+                    Error ("Duplicate external identifier: '%s'",
+                           GetString (L->Name));
                 }
                 return;
             }
@@ -694,10 +694,15 @@ static void CheckSymType (const Export* E)
                            GetString (E->Obj->Name),
                            GetSourceName (ExportLI),
                            GetSourceLine (ExportLI));
-            } else {
+            } else if (ExportLI) {
                 SB_Printf (&ExportLoc, "%s(%u)",
                            GetSourceName (ExportLI),
                            GetSourceLine (ExportLI));
+            } else {
+                /* The export is linker generated and we don't have line
+                ** information (likely from command line define)
+                */
+                SB_Printf (&ExportLoc, "%s", GetObjFileName (E->Obj));
             }
             if (I->Obj) {
                 /* The import comes from an object file */
