@@ -24,7 +24,7 @@ ifdef QUIET
   NULLERR = 2>$(NULLDEV)
 endif
 
-SIM65FLAGS = -x 200000000
+SIM65FLAGS = -x 5000000000
 
 CL65 := $(if $(wildcard ../../bin/cl65*),..$S..$Sbin$Scl65,cl65)
 SIM65 := $(if $(wildcard ../../bin/sim65*),..$S..$Sbin$Ssim65,sim65)
@@ -41,18 +41,13 @@ TESTS += $(foreach option,$(OPTIONS),$(SOURCES:%.c=$(WORKDIR)/%.$(option).65c02.
 
 all: $(TESTS)
 
+# The same input file is processed with different cl65 args,
+# but cl65 uses the input file name to make the temp file name,
+# and they stomp each other.
+.NOTPARALLEL:
+
 $(WORKDIR):
 	$(call MKDIR,$(WORKDIR))
-
-# Some files have "K & R"-style syntax.  Therefore, some forward
-# function-declarations don't match the later function definitions.
-# Those programs fail when fastcall is used; but, the cdecl calling convention
-# tolerates those conflicts.  Therefore, make their functions default to cdecl.
-#
-$(WORKDIR)/cq4.%.prg  \
-$(WORKDIR)/cq71.%.prg \
-$(WORKDIR)/cq81.%.prg \
-$(WORKDIR)/cq84.%.prg: CC65FLAGS += -Wc --all-cdecl
 
 define PRG_template
 
