@@ -51,7 +51,7 @@ ifneq ($(filter disk samples.%,$(MAKECMDGOALS)),)
   # If TARGET_PATH contains spaces then it is presumed to contain escaped spaces. GNU make
   # has very limited support for paths containing spaces. $(wildcard) is the only function
   # that is aware of escaped spaces. However, $(wildcard) never returns paths with escaped
-  # spaces !!! So if it e.g. finds in a path with 2 spaces 4 files then one ends up with a
+  # spaces !!! So if it e.g. finds 4 files in a path with 2 spaces then one ends up with a
   # return value consisting of 12 plain words :-((
   #
   # Fortunately we can work around that behaviour here because we know that the files we
@@ -90,15 +90,15 @@ ifneq ($(filter disk samples.%,$(MAKECMDGOALS)),)
   # For this one, see https://applecommander.github.io/
   AC ?= ac.jar
 
-  # For this one, see http://www.horus.com/~hias/atari/
+  # For this one, see https://www.horus.com/~hias/atari/
   DIR2ATR ?= dir2atr
-
-  DISK_c64       = samples.d64
-  DISK_apple2    = samples.dsk
-  DISK_apple2enh = samples.dsk
-  DISK_atari     = samples.atr
-  DISK_atarixl   = samples.atr
 endif
+
+DISK_c64       = samples.d64
+DISK_apple2    = samples.dsk
+DISK_apple2enh = samples.dsk
+DISK_atari     = samples.atr
+DISK_atarixl   = samples.atr
 
 # --------------------------------------------------------------------------
 # System-dependent settings
@@ -198,6 +198,9 @@ EXELIST_atarixl = $(EXELIST_atari)
 
 EXELIST_atari2600 = \
         atari2600hello
+        
+EXELIST_supervision = \
+        supervisionhello
 
 # Unlisted targets will try to build everything.
 # That lets us learn what they cannot build, and what settings
@@ -226,6 +229,20 @@ ovrldemo: overlaydemo.o
 	$(LD) $(LDFLAGS) -o $@ -C $(SYS)-overlay.cfg -m $@.map $^ $(SYS).lib
 
 OVERLAYLIST := $(foreach I,1 2 3,multdemo.$I ovrldemo.$I)
+
+# --------------------------------------------------------------------------
+# TGI programs on the VIC-20 need a special ld65 configuration file.
+
+ifeq ($(SYS),vic20)
+mandelbrot.o: override CFLAGS += -D DYN_DRV=0
+mandelbrot: mandelbrot.o
+	$(LD) $(LDFLAGS) -o $@ -C vic20-tgi.cfg -m $@.map $^ $(SYS).lib
+
+# tgidemo needs at least 16K of RAM expansion.
+tgidemo.o: override CFLAGS += -D DYN_DRV=0
+tgidemo: tgidemo.o
+	$(LD) -D __HIMEM__=0x6000 $(LDFLAGS) -o $@ -C vic20-tgi.cfg -m $@.map $^ $(SYS).lib
+endif
 
 # --------------------------------------------------------------------------
 # Rule to make a CBM disk with all samples. Needs the c1541 program that comes
